@@ -60,7 +60,8 @@
   # One of: custom (no -march), generic, v3, zen2, zen4, native (x86_64 only).
   # "native" makes the result impure and unusable on other CPUs.
   buildPreset ? "custom",
-  src ? lib.cleanSourceWith {
+  # Not called `src`: callPackage would fill that from nixpkgs' deprecated `src` alias.
+  orchidSrc ? lib.cleanSourceWith {
     src = ../.;
     filter =
       path: _type:
@@ -102,8 +103,8 @@ let
       version = "0";
       src = fetchurl { inherit url hash; };
       patches = lib.optionals (patchDir != null) (
-        map (f: "${src}/.patch/${patchDir}/${f}") (
-          builtins.attrNames (builtins.readDir "${src}/.patch/${patchDir}")
+        map (f: "${orchidSrc}/.patch/${patchDir}/${f}") (
+          builtins.attrNames (builtins.readDir "${orchidSrc}/.patch/${patchDir}")
         )
       );
       dontConfigure = true;
@@ -157,7 +158,7 @@ let
     '';
   };
 
-  profile = "-fprofile-use=${src}/orchid.profdata -Wno-backend-plugin -Wno-profile-instr-unprofiled -Wno-profile-instr-out-of-date";
+  profile = "-fprofile-use=${orchidSrc}/orchid.profdata -Wno-backend-plugin -Wno-profile-instr-unprofiled -Wno-profile-instr-out-of-date";
   commonFlags = lib.concatStringsSep " " (
     lib.optional pgo profile ++ lib.optional thinLTO "-flto=thin"
   );
@@ -170,7 +171,8 @@ let
 in
 baseStdenv.mkDerivation {
   pname = "orchid";
-  inherit version src;
+  inherit version;
+  src = orchidSrc;
 
   nativeBuildInputs = [
     cmake
