@@ -269,15 +269,15 @@ baseStdenv.mkDerivation {
   ++ lib.optionals useClang [
     (lib.cmakeFeature "CMAKE_AR" "${llvm.llvm}/bin/llvm-ar")
     (lib.cmakeFeature "CMAKE_RANLIB" "${llvm.llvm}/bin/llvm-ranlib")
-  ]
-  ++ lib.optionals (commonFlags != "") [
-    (lib.cmakeFeature "CMAKE_C_FLAGS" commonFlags)
-    (lib.cmakeFeature "CMAKE_CXX_FLAGS" commonFlags)
-  ]
-  ++ lib.optionals (linkFlags != "") [
-    (lib.cmakeFeature "CMAKE_EXE_LINKER_FLAGS" linkFlags)
-    (lib.cmakeFeature "CMAKE_SHARED_LINKER_FLAGS" linkFlags)
   ];
+
+  # Passed through the compiler wrapper's environment rather than cmakeFlags:
+  # cmakeFlags are split on whitespace, which would turn the individual
+  # -W options below into (invalid) CMake arguments.
+  env = {
+    NIX_CFLAGS_COMPILE = commonFlags;
+    NIX_CFLAGS_LINK = linkFlags;
+  };
 
   # The Vulkan loader and the audio/input libraries are dlopen()ed.
   qtWrapperArgs = [
