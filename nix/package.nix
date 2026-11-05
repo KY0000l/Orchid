@@ -37,7 +37,6 @@
   spirv-headers,
   spirv-tools,
   simpleini,
-  frozen,
   xbyak,
   cubeb,
   cpp-jwt,
@@ -126,6 +125,12 @@ let
       url = "https://github.com/facebook/zstd/archive/33618c8.tar.gz";
       hash = "sha512-KwBsPBEMOL0vWJa0LTajiTHI6uJh8wVS+an9BEWNIY2PGhQl8Rf9Eq9UXtdwQuSy0aGptihsTQuddO958gqPCA==";
     };
+    # nixpkgs' `frozen` is an unrelated JSON parser, so this one is always fetched.
+    frozen = cpmDep {
+      name = "frozen";
+      url = "https://github.com/serge-sans-paille/frozen/archive/61dce5ae18.tar.gz";
+      hash = "sha512-uN/nQcgrwXjfyXSdSrWhMM7nGNnue3HZtUfPX38jAn7QFSrSUAEqhUY5n8weEhh+/GjYnWcxJWxNLffQTu+NXA==";
+    };
     zbic = cpmDep {
       name = "zbic";
       url = "https://github.com/kinnay/zbic/archive/11b08f2712264bbed731545085cbd9702096ceb7.tar.gz";
@@ -212,7 +217,6 @@ baseStdenv.mkDerivation {
     spirv-headers
     spirv-tools
     simpleini
-    frozen
     xbyak
     cubeb
     cpp-jwt
@@ -260,6 +264,8 @@ baseStdenv.mkDerivation {
     # The exceptions, fetched above.
     (lib.cmakeFeature "sirit_CUSTOM_DIR" "${deps.sirit}")
     (lib.cmakeFeature "zstd_CUSTOM_DIR" "${deps.zstd}")
+    (lib.cmakeBool "frozen_FORCE_BUNDLED" true)
+    (lib.cmakeFeature "frozen_CUSTOM_DIR" "${deps.frozen}")
     (lib.cmakeBool "zbic_FORCE_BUNDLED" true)
     (lib.cmakeFeature "zbic_CUSTOM_DIR" "${deps.zbic}")
     (lib.cmakeBool "reshade_FORCE_BUNDLED" true)

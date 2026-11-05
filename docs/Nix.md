@@ -1,7 +1,7 @@
 # Building and installing with Nix
 
 Orchid ships a flake. Nix builds it offline in the sandbox: system libraries come from nixpkgs, and the few
-dependencies CPMUtil insists on bundling (sirit, zstd, zbic, reshade, the Switch time zone data) are fetched
+dependencies CPMUtil insists on bundling (sirit, zstd, frozen, zbic, reshade, the Switch time zone data) are fetched
 with the SHA-512 hashes from `cpmfile.json`. Nothing is downloaded during configure.
 
 ## Packages
@@ -58,7 +58,7 @@ pkgs.orchid.override {
 
 ## Updating dependencies
 
-When `cpmfile.json` changes the version or hash of `sirit`, `zstd`, `zbic`, `reshade` or `tzdb`, update the
+When `cpmfile.json` changes the version or hash of `sirit`, `zstd`, `frozen`, `zbic`, `reshade` or `tzdb`, update the
 matching URL and `hash` in `nix/package.nix` (SRI form: `sha512-` + base64 of the hex digest). When the
 `orchid.profdata` is regenerated with a newer LLVM, switch `llvmPackages_23` to the matching version.
 
