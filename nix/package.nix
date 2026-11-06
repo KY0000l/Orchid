@@ -9,6 +9,7 @@
 {
   lib,
   stdenv,
+  overrideCC,
   llvmPackages_23,
   fetchurl,
   cmake,
@@ -83,7 +84,12 @@ let
   inherit (qt6Packages) quazip;
   llvm = llvmPackages_23;
   useClang = pgo || thinLTO;
-  baseStdenv = if useClang then llvm.stdenv else stdenv;
+  # clang with lld as its default linker. lld has to come from llvm.bintools
+  # (nixpkgs' wrapped LLVM binutils) rather than `-fuse-ld=lld` + a bare
+  # `ld.lld` in PATH: the unwrapped binary bypasses the linker wrapper, which
+  # is what adds the -rpath entries for every dependency.
+  clangLld = llvm.libstdcxxClang.override { bintools = llvm.bintools; };
+  baseStdenv = if useClang then overrideCC stdenv clangLld else stdenv;
 
   # Packages that CPMUtil insists on bundling, or that have no usable system
   # package. CPMUtil would download them at configure time, which the sandbox
@@ -167,12 +173,7 @@ let
   commonFlags = lib.concatStringsSep " " (
     lib.optional pgo profile ++ lib.optional thinLTO "-flto=thin"
   );
-  linkFlags = lib.concatStringsSep " " (
-    lib.optionals useClang [
-      "-fuse-ld=lld"
-    ]
-    ++ lib.optional thinLTO "-flto=thin"
-  );
+  linkFlags = lib.concatStringsSep " " (lib.optional thinLTO "-flto=thin");
 in
 baseStdenv.mkDerivation {
   pname = "orchid";
@@ -191,10 +192,6 @@ baseStdenv.mkDerivation {
     glslang
     qt6.wrapQtAppsHook
     qt6.qttools
-  ]
-  ++ lib.optionals useClang [
-    llvm.lld
-    llvm.llvm # llvm-ar / llvm-ranlib for LTO archives
   ];
 
   buildInputs = [
@@ -271,10 +268,6 @@ baseStdenv.mkDerivation {
     (lib.cmakeBool "reshade_FORCE_BUNDLED" true)
     (lib.cmakeFeature "reshade_CUSTOM_DIR" "${deps.reshade}")
     (lib.cmakeFeature "YUZU_TZDB_PATH" "${tzdb}")
-  ]
-  ++ lib.optionals useClang [
-    (lib.cmakeFeature "CMAKE_AR" "${llvm.llvm}/bin/llvm-ar")
-    (lib.cmakeFeature "CMAKE_RANLIB" "${llvm.llvm}/bin/llvm-ranlib")
   ];
 
   # Passed through the compiler wrapper's environment rather than cmakeFlags:
